@@ -6,6 +6,13 @@ nlp = spacy.load("en_core_web_sm")
 
 POPULATION_SIZE = 10
 
+class BreakOut(Exception):
+    pass
+def print_result_generation(gen_th,population):
+    print(f"Thế hệ F {gen_th}: {fitness_average(population)}")
+    for i in range(len(population)):
+        print(f"Cá thể {i}: {population[i]} ---fitness--- {cal_fitness(population[i])}")
+        
 def generate_individual(words):
     doc = nlp(words)
     tokens = [token.text for token in doc]
@@ -13,41 +20,7 @@ def generate_individual(words):
     return ' '.join(tokens)
 
 def cal_fitness(words):
-    score = 0
-    doc = nlp(words)
-    subj_position = []
-    verb_position = []
-    obj_position = []
-    amod_position = -1
-    
-    for i, token in enumerate(doc):
-        # print(token.text, token.dep_)
-        if "nsubj" in token.dep_:
-            subj_position.append(i)
-            score += 1
-        elif "ROOT" in token.dep_:
-            verb_position.append(i)
-            score += 1
-        elif "amod" in token.dep_:
-            amod_position = i
-            score += 1
-        elif "obj" in token.dep_:
-            obj_position.append(i)
-            score += 1
-    if(len(subj_position) == 0 or len(verb_position) == 0 or len(obj_position) == 0):
-        return score
-    if len(subj_position) > 1 or len(verb_position) > 1 or len(obj_position) > 1:
-        return -1
-    if(subj_position[0] == 0):
-        score += 1
-    if(amod_position == -1):
-        if subj_position[0] < verb_position[0] < obj_position[0]:
-            score += 1
-    else:
-        if(subj_position[0] < verb_position[0] < amod_position < obj_position[0]):
-            score += 1
-
-    return score
+    return rules.compare_struct(words)
 
 def order_crossover(parent1, parent2):
     # Chọn hai điểm cắt ngẫu nhiên
@@ -66,88 +39,109 @@ def order_crossover(parent1, parent2):
                 if child[i] is None:
                     child[i] = gene
                     break
-
     return child
 
-def main():
-    words = input('Nhập các từ: ')
-    count = 0
-    for token in nlp(words):
-        count += 1
-    if(count < 3 or count > 5):
-        print('Xin lỗi vì sự bất tiện này, hệ thống chỉ hoạt động khi số lượng từ lớn hơn 3 và nhỏ hơn 5.')
-        return
-    
-    global POPULATION_SIZE
+def generate_children(parents):
+    for i in range(len(parents)):
+        parents[i] = parents[i].split()
 
-    generation = 1
-    population = set()
-    for i in range(POPULATION_SIZE):
-        individual = generate_individual(words)
-        population.add(individual)
+    children = []
+    for i in range(0, len(parents) - 1, 2):
+        parent1 = parents[i]
+        parent2 = parents[i + 1]
+        child1 = order_crossover(parent1, parent2)
+        child2 = order_crossover(parent2, parent1)
+        children.append(child1)
+        children.append(child2)
 
-    population = list(population)
-    
-    found = False
+    return children
 
-    # Rank Selection
-    population = sorted(population, key = lambda x:cal_fitness(x), reverse=True)
+def convert_to_string(arr):
+    for i in range(len(arr)):
+        arr[i] = " ".join(arr[i])
+    return arr  
+
+def rank_selection(population, number):
+    ranked_solutions = sorted(population, key = lambda x:cal_fitness(x), reverse=True)
     totalScore = 0
-    for individual in population:
+    for individual in ranked_solutions:
         totalScore += cal_fitness(individual)
 
     weights = []
-    parents = set()
-    for individual in population:
+    parents = []
+    for individual in ranked_solutions:
         weights.append(cal_fitness(individual) / totalScore)
     
-    while len(parents) < 4:
-        parent = random.choices(population, weights=weights, k=1)[0]
-        parents.add(parent)
-    
-    parents = list(parents)
+    while len(parents) < number:
+        parent = random.choices(ranked_solutions, weights=weights, k=1)[0]
+        parents.append(parent)
+    return parents
 
-    for i in range(len(parents)):
-        parents[i] = parents[i].split()
- 
-
-    # Lai ghép Order-1
-    children = []
-    for i in range(len(parents) - 1):
-        for j in range(i + 1, len(parents)):
-            parent1 = parents[i]
-            parent2 = parents[j]
-            child1 = order_crossover(parent1, parent2)
-            child2 = order_crossover(parent2, parent1)
-            children.append(child1)
-            children.append(child2)
-    
-    # print(children)
-
-    # Đột biến hoán vị phép trộn
+def fitness_average(arr):
+    sum = 0
+    for item in arr:
+        sum += cal_fitness(item)
+    return sum/len(arr)
+def genetic_algorithm(population):
+    generation = 1
     mutations = []
-    for i in range(len(children)):
-        index = random.sample(range(len(children[0]) - 1), 1)[0]
-        slice_child1 = sorted(children[i][0:index], reverse=True)
-        slice_child2 = children[i][index:]
-        mutation = slice_child1 + slice_child2
-        mutation = " ".join(mutation)
-        mutations.append(mutation)
+    print_result_generation(generation-1,population)
+    try:
+        while generation < 30:
+            mutations = []
+            # Rank Selection and Steady State selection
+            parents = rank_selection(population, 6)
+            parents_copy = parents.copy()
+            # Lai ghép Order-1
+            children = generate_children(parents_copy)
+            children_clone = convert_to_string(children)
+            res = rank_selection(children_clone, 4)
+            result = parents + res
+            # Lai ghép Order-1
+            children_2 = generate_children(result)
+            
+            # Đột biến hoán vị phép trộn
+            children_random = random.randint(0, 9)
+            index1, index2 = random.sample(range(len(children_2[children_random])), 2)
+            children_2[children_random][index1], children_2[children_random][index2] = children_2[children_random][index2], children_2[children_random][index1]
+            
+            for children_2_item in children_2:
+                mutation = " ".join(children_2_item)
+                mutations.append(mutation)
+        
+            # In kết quả
+            print_result_generation(generation,mutations)
+            
+            # Tạo điều kiện dừng sớm
+            for item in mutations:
+                fitness_item = cal_fitness(item)
+                if(fitness_item == 1):
+                    raise BreakOut
+            generation += 1
+    except BreakOut:
+        pass
     
-    print('Những gene tốt nhất:')
-    for gene in mutations:
-        if(cal_fitness(gene) == 5):
-            print(gene)
-
-
+    arranged = ''
+    fitness_max = 0
+    for mutation in mutations:
+        fitness_mutation = cal_fitness(mutation)
+        if(fitness_mutation > fitness_max):
+            arranged = mutation
+            fitness_max = fitness_mutation
+    print("------------------------------------------")
+    print("Kết quả câu sau khi sắp xếp là :"+arranged)
     
+def main():
+    words = input('Nhập các từ: ')    
     
-
+    global POPULATION_SIZE
+    population = []
+    for i in range(POPULATION_SIZE):
+        individual = generate_individual(words)
+        population.append(individual)
+        
+    genetic_algorithm(population)
     
-
-    # print(cal_fitness(words))
-   
-
-    
+        
 if __name__ == '__main__': 
     main()     

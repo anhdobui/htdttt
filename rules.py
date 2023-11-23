@@ -1,72 +1,24 @@
-def checkIsImperative(doc, score):
-    verb_position = []
-    obj_position = []
-    
-    for i, token in enumerate(doc):
-        if "ROOT" in token.dep_:
-            verb_position.append(i)
-            score += 1
-        elif "obj" in token.dep_:
-            obj_position.append(i)
-    if(len(verb_position) == 0 or len(obj_position) == 0):
-        return score
-    if(len(verb_position) > 1 or len(obj_position) > 1):
-        return -1
-    if(verb_position[0] == 0):
-        return 10
-    return score
+import spacy
+import pandas as pd
+nlp = spacy.load("en_core_web_sm")
 
+df = pd.read_csv("struct_english.csv")
 
-def checkIsInterrogative(doc, score):
-    aux_position = []
-    wh_position = []
-    subj_position = []
-    verb_position = []
+def compare_struct(text_input):
+ doc_nlp_input = nlp(text_input)
+ struct_input = []
+ for token in doc_nlp_input:
+  struct_input.append(token.pos_)
+ struct_input = ' '.join(struct_input)
+ 
+ doc_nlp_struct_input = nlp(struct_input)
+ result = {'similar_result':-2}
+ for row in df[df['Quantity'] == len(doc_nlp_input)]['struct']:
+  
+  doc_nlp_compare = nlp(row)
+  similar_row = doc_nlp_struct_input.similarity(doc_nlp_compare)
+  if(similar_row > result['similar_result']):
+   result['similar_result'] = similar_row
+   result['struct_result'] = row
+ return result['similar_result']
 
-    for i, token in enumerate(doc):
-        print(token, token.dep_)
-        if token.text.lower() in ["who", "what", "where", "how", "why"]:
-            wh_position.append(i)
-            score += 1
-        elif "aux" in token.dep_:
-            aux_position.append(i)
-            score += 1
-        elif "nsubj" in token.dep_:
-            subj_position.append(i)
-            score += 1
-        elif "ROOT" in token.dep_:
-            verb_position.append(i)
-            score += 1
-    if(len(verb_position) == 0 or len(wh_position) == 0 or len(aux_position or len(subj_position)) == 0):
-        return score
-    if(len(aux_position) > 1 or len(wh_position) > 1 or len(subj_position) > 1 or len(verb_position) > 1):
-        return -1
-    if(len(wh_position) == 1 and wh_position[0] < aux_position[0] < subj_position[0] < verb_position[0]):
-        score = 10
-    if(len(wh_position) == 0 and aux_position[0] < subj_position[0] < verb_position[0]):
-        score = 10
-    return score
-
-def checkIsDeclarative(doc, score):
-    subj_position = []
-    verb_position = []
-    obj_position = []
-
-    for i, token in enumerate(doc):
-        print(token, token.dep_)
-        if "nsubj" in token.dep_:
-            subj_position.append(i)
-            score += 1
-        elif "ROOT" in token.dep_:
-            verb_position.append(i)
-            score += 1
-        elif "obj" in token.dep_:
-            obj_position.append(i)
-            score += 1
-    if(len(subj_position) == 0 or len(verb_position) == 0 or len(obj_position) == 0):
-        return score
-    if len(subj_position) > 1 or len(verb_position) > 1 or len(obj_position) > 1:
-        return -1
-    if subj_position[0] < verb_position[0] < obj_position[0]:
-        score = 10
-    return score
