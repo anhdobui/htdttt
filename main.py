@@ -1,6 +1,7 @@
 import spacy
 import random
 import rules
+from itertools import permutations
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -129,16 +130,20 @@ def genetic_algorithm(population):
             arranged = mutation
             fitness_max = fitness_mutation
     print("------------------------------------------")
-    print("Kết quả câu sau khi sắp xếp là :"+arranged)
+    print("Kết quả câu sau khi sắp xếp là like:"+arranged)
     
 def main():
     words = input('Nhập các từ: ')    
     count = 0
     for _ in nlp(words):
         count += 1
-    if (count == 1):
-        print(words)
-        return 
+    if count <= 3:
+        words = words.split()
+        word_permutations = permutations(words)
+        for perm in word_permutations:
+            if(cal_fitness(' '.join(perm)) == 1):
+                print("Kết quả câu sau khi sắp xếp là: ", ' '.join(perm))
+        return
     if(count > 5):
         print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 5.')
         return
