@@ -133,7 +133,15 @@ def genetic_algorithm(population):
     
 def main():
     words = input('Nhập các từ: ')    
-    
+    count = 0
+    for _ in nlp(words):
+        count += 1
+    if (count == 1):
+        print(words)
+        return 
+    if(count > 5):
+        print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 5.')
+        return
     global POPULATION_SIZE
     population = []
     for i in range(POPULATION_SIZE):
