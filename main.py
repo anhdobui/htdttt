@@ -85,10 +85,15 @@ def fitness_average(arr):
     return sum/len(arr)
 def genetic_algorithm(population):
     generation = 1
-    mutations = []
+    mutations = population.copy()
     print_result_generation(generation-1,population)
     try:
-        while generation < 30:
+        while generation < 100:
+            # Tạo điều kiện dừng sớm
+            for item in mutations:
+                fitness_item = cal_fitness(item)
+                if(fitness_item == 1):
+                    raise BreakOut
             mutations = []
             # Rank Selection and Steady State selection
             parents = rank_selection(population, 6)
@@ -113,11 +118,7 @@ def genetic_algorithm(population):
             # In kết quả
             print_result_generation(generation,mutations)
             
-            # Tạo điều kiện dừng sớm
-            for item in mutations:
-                fitness_item = cal_fitness(item)
-                if(fitness_item == 1):
-                    raise BreakOut
+            
             generation += 1
     except BreakOut:
         pass
@@ -130,7 +131,7 @@ def genetic_algorithm(population):
             arranged = mutation
             fitness_max = fitness_mutation
     print("------------------------------------------")
-    print("Kết quả câu sau khi sắp xếp là like:"+arranged)
+    print("Kết quả câu sau khi sắp xếp là :"+arranged)
     
 def main():
     words = input('Nhập các từ: ')    
@@ -144,8 +145,8 @@ def main():
             if(cal_fitness(' '.join(perm)) == 1):
                 print("Kết quả câu sau khi sắp xếp là: ", ' '.join(perm))
         return
-    if(count > 5):
-        print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 5.')
+    if(count > 6):
+        print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 6.')
         return
     global POPULATION_SIZE
     population = []
