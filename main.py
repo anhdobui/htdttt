@@ -87,7 +87,7 @@ def genetic_algorithm(population):
     mutations = []
     print_result_generation(generation-1,population)
     try:
-        while generation < 30:
+        while generation < 100:
             mutations = []
             # Rank Selection and Steady State selection
             parents = rank_selection(population, 6)
@@ -139,9 +139,9 @@ def main():
     if (count == 1):
         print(words)
         return 
-    if(count > 5):
-        print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 5.')
-        return
+    # if(count > 5):
+    #     print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 5.')
+    #     return
     global POPULATION_SIZE
     population = []
     for i in range(POPULATION_SIZE):
