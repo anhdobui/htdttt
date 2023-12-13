@@ -88,7 +88,7 @@ def genetic_algorithm(population):
     mutations = []
     print_result_generation(generation-1,population)
     try:
-        while generation < 30:
+        while generation < 100:
             mutations = []
             # Rank Selection and Steady State selection
             parents = rank_selection(population, 6)
@@ -130,7 +130,7 @@ def genetic_algorithm(population):
             arranged = mutation
             fitness_max = fitness_mutation
     print("------------------------------------------")
-    print("Kết quả câu sau khi sắp xếp là like:"+arranged)
+    print("Kết quả câu sau khi sắp xếp là: "+arranged)
     
 def main():
     words = input('Nhập các từ: ')    
@@ -144,7 +144,7 @@ def main():
             if(cal_fitness(' '.join(perm)) == 1):
                 print("Kết quả câu sau khi sắp xếp là: ", ' '.join(perm))
         return
-    if(count > 5):
+    if(count > 6):
         print('Hệ thống chỉ hoạt động tốt khi số lượng nhỏ hơn 5.')
         return
     global POPULATION_SIZE
